@@ -2,30 +2,40 @@ package schema
 
 // ScanResult holds the findings for a single port
 type ScanResult struct {
-	Port    int    `json:"port"`
-	State   string `json:"state"`
-	Service string `json:"service"`
-	Banner  string `json:"banner"`
+	Port      int    `json:"port"`
+	State     string `json:"state"`
+	Service   string `json:"service"`
+	Banner    string `json:"banner"`
+	RiskLevel string `json:"risk_level"`
 }
 
+type RiskSummary struct {
+	Critical int `json:"critical"`
+	High     int `json:"high"`
+	Medium   int `json:"medium"`
+	Low      int `json:"low"`
+	Info     int `json:"info"`
+}
 type ScanReport struct {
-	Target     string       `json:"target"`
-	ScanTime   string       `json:"scan_time"`
-	Duration   string       `json:"duration"`
-	TotalPorts int          `json:"total_ports"`
-	OpenPorts  int          `json:"open_ports"`
-	Results    []ScanResult `json:"results"`
+	Target      string       `json:"target"`
+	ScanTime    string       `json:"scan_time"`
+	Duration    string       `json:"duration"`
+	TotalPorts  int          `json:"total_ports"`
+	OpenPorts   int          `json:"open_ports"`
+	RiskSummary RiskSummary  `json:"risk_summary"`
+	Results     []ScanResult `json:"results"`
 }
 
 // Common ports
 var CommonPorts = []int{
-	22, 23, 25, 80, 110, 135, 139,
+	21, 22, 23, 25, 80, 110, 135, 139,
 	443, 445, 993, 995, 1433, 3306,
-	3389, 5432, 8080, 8443,
+	3389, 5432, 6379, 8080, 8443,
 }
 
 // Maps port numbers to their known service names
 var ServiceMap = map[int]string{
+	21:   "FTP",
 	22:   "SSH",
 	23:   "Telnet",
 	25:   "SMTP",
@@ -41,6 +51,7 @@ var ServiceMap = map[int]string{
 	3306: "MySQL",
 	3389: "RDP",
 	5432: "PostgreSQL",
+	6379: "Redis",
 	8080: "HTTP-Alt",
 	8443: "HTTPS-Alt",
 }

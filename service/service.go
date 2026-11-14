@@ -34,21 +34,52 @@ func ScanPorts(target string, workers int) schema.ScanReport {
 	close(resultChan)
 
 	duration := time.Since(startTime).String()
+	riskSummary := schema.RiskSummary{}
 
 	results := []schema.ScanResult{}
 	for r := range resultChan {
 		if r.State == "open" {
 			results = append(results, r)
+			switch r.RiskLevel {
+			case "Critical":
+				riskSummary.Critical++
+			case "High":
+				riskSummary.High++
+			case "Medium":
+				riskSummary.Medium++
+			case "Low":
+				riskSummary.Low++
+			case "Info":
+				riskSummary.Info++
+			}
 		}
 	}
 
+	fmt.Println("\n=== Risk Summary ===")
+	if riskSummary.Critical > 0 {
+		fmt.Printf("  CRITICAL: %d (immediate action required)\n", riskSummary.Critical)
+	}
+	if riskSummary.High > 0 {
+		fmt.Printf("  HIGH:     %d (address soon)\n", riskSummary.High)
+	}
+	if riskSummary.Medium > 0 {
+		fmt.Printf("  MEDIUM:   %d (review recommended)\n", riskSummary.Medium)
+	}
+	if riskSummary.Low > 0 {
+		fmt.Printf("  LOW:      %d (acceptable risk)\n", riskSummary.Low)
+	}
+	if riskSummary.Info > 0 {
+		fmt.Printf("  INFO:     %d (informational)\n", riskSummary.Info)
+	}
+
 	report := schema.ScanReport{
-		Target:     target,
-		ScanTime:   startTime.Format(time.RFC3339),
-		Duration:   duration,
-		TotalPorts: len(schema.CommonPorts),
-		OpenPorts:  len(results),
-		Results:    results,
+		Target:      target,
+		ScanTime:    startTime.Format(time.RFC3339),
+		Duration:    duration,
+		TotalPorts:  len(schema.CommonPorts),
+		OpenPorts:   len(results),
+		RiskSummary: riskSummary,
+		Results:     results,
 	}
 
 	return report
@@ -70,11 +101,14 @@ func ScanPort(target string, port int, timeout time.Duration) schema.ScanResult 
 		service = identifyService(port, banner)
 	}
 
+	riskLevel := classifyRisk(port, service)
+
 	return schema.ScanResult{
-		Port:    port,
-		State:   "open",
-		Service: service,
-		Banner:  banner,
+		Port:      port,
+		State:     "open",
+		Service:   service,
+		Banner:    banner,
+		RiskLevel: riskLevel,
 	}
 }
 
@@ -134,4 +168,31 @@ func grabBanner(conn net.Conn, port int) string {
 		banner = banner[:200]
 	}
 	return banner
+}
+
+func classifyRisk(port int, service string) string {
+	switch port {
+	case 23:
+		return "Critical"
+	case 21:
+		return "Critical"
+	case 3389:
+		return "High"
+	case 445:
+		return "High"
+	case 80, 8080:
+		return "High"
+	case 1433, 3306, 5432:
+		return "Medium"
+	case 135, 139:
+		return "Medium"
+	case 443, 8443:
+		return "Low"
+	case 22:
+		return "Low"
+	case 993, 995:
+		return "Low"
+	default:
+		return "Info"
+	}
 }
