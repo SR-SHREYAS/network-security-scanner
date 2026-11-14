@@ -8,6 +8,15 @@ type ScanResult struct {
 	Banner  string `json:"banner"`
 }
 
+type ScanReport struct {
+	Target     string       `json:"target"`
+	ScanTime   string       `json:"scan_time"`
+	Duration   string       `json:"duration"`
+	TotalPorts int          `json:"total_ports"`
+	OpenPorts  int          `json:"open_ports"`
+	Results    []ScanResult `json:"results"`
+}
+
 // Common ports
 var CommonPorts = []int{
 	22, 23, 25, 80, 110, 135, 139,

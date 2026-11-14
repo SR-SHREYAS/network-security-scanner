@@ -12,7 +12,9 @@ import (
 )
 
 // concurrent orchestration
-func ScanPorts(target string, workers int) []schema.ScanResult {
+func ScanPorts(target string, workers int) schema.ScanReport {
+	startTime := time.Now()
+
 	resultChan := make(chan schema.ScanResult, len(schema.CommonPorts))
 	semaphore := make(chan struct{}, workers)
 	var wg sync.WaitGroup
@@ -31,13 +33,26 @@ func ScanPorts(target string, workers int) []schema.ScanResult {
 	wg.Wait()
 	close(resultChan)
 
+	duration := time.Since(startTime).String()
+
 	results := []schema.ScanResult{}
 	for r := range resultChan {
 		if r.State == "open" {
 			results = append(results, r)
 		}
 	}
-	return results
+
+	report := schema.ScanReport{
+		Target:     target,
+		ScanTime:   startTime.Format(time.RFC3339),
+		Duration:   duration,
+		TotalPorts: len(schema.CommonPorts),
+		OpenPorts:  len(results),
+		Results:    results,
+	}
+
+	return report
+
 }
 
 // single port
