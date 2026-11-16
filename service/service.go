@@ -38,20 +38,9 @@ func ScanPorts(target string, workers int) schema.ScanReport {
 
 	results := []schema.ScanResult{}
 	for r := range resultChan {
-		if r.State == "open" {
+		if r.State == schema.StateOpen {
 			results = append(results, r)
-			switch r.RiskLevel {
-			case "Critical":
-				riskSummary.Critical++
-			case "High":
-				riskSummary.High++
-			case "Medium":
-				riskSummary.Medium++
-			case "Low":
-				riskSummary.Low++
-			case "Info":
-				riskSummary.Info++
-			}
+			riskSummary.Add(r.RiskLevel)
 		}
 	}
 
@@ -88,7 +77,7 @@ func ScanPorts(target string, workers int) schema.ScanReport {
 
 // single port
 func ScanPort(target string, port int, timeout time.Duration) schema.ScanResult {
-	address := fmt.Sprintf("%s:%d", target, port)
+	address := fmt.Sprintf("%s: %d", target, port)
 	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
 		return schema.ScanResult{Port: port, State: "closed"}
@@ -105,7 +94,7 @@ func ScanPort(target string, port int, timeout time.Duration) schema.ScanResult 
 
 	return schema.ScanResult{
 		Port:      port,
-		State:     "open",
+		State:     schema.StateOpen,
 		Service:   service,
 		Banner:    banner,
 		RiskLevel: riskLevel,
@@ -170,29 +159,17 @@ func grabBanner(conn net.Conn, port int) string {
 	return banner
 }
 
-func classifyRisk(port int, service string) string {
+func classifyRisk(port int, service string) schema.RiskLevel {
 	switch port {
-	case 23:
-		return "Critical"
-	case 21:
-		return "Critical"
-	case 3389:
-		return "High"
-	case 445:
-		return "High"
-	case 80, 8080:
-		return "High"
-	case 1433, 3306, 5432:
-		return "Medium"
-	case 135, 139:
-		return "Medium"
-	case 443, 8443:
-		return "Low"
-	case 22:
-		return "Low"
-	case 993, 995:
-		return "Low"
+	case 21, 23:
+		return schema.RiskCritical
+	case 3389, 445, 80, 8080:
+		return schema.RiskHigh
+	case 1433, 3306, 5432, 135, 139:
+		return schema.RiskMedium
+	case 443, 8443, 22, 993, 995:
+		return schema.RiskLow
 	default:
-		return "Info"
+		return schema.RiskInfo
 	}
 }

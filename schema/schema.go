@@ -1,12 +1,29 @@
 package schema
 
+type PortState string
+
+const (
+	StateOpen   PortState = "open"
+	StateClosed PortState = "closed"
+)
+
+type RiskLevel string
+
+const (
+	RiskCritical RiskLevel = "critical"
+	RiskHigh     RiskLevel = "high"
+	RiskMedium   RiskLevel = "medium"
+	RiskLow      RiskLevel = "low"
+	RiskInfo     RiskLevel = "info"
+)
+
 // ScanResult holds the findings for a single port
 type ScanResult struct {
-	Port      int    `json:"port"`
-	State     string `json:"state"`
-	Service   string `json:"service"`
-	Banner    string `json:"banner"`
-	RiskLevel string `json:"risk_level"`
+	Port      int       `json:"port"`
+	State     PortState `json:"state"`
+	Service   string    `json:"service"`
+	Banner    string    `json:"banner"`
+	RiskLevel RiskLevel `json:"risk_level"`
 }
 
 type RiskSummary struct {
@@ -16,6 +33,22 @@ type RiskSummary struct {
 	Low      int `json:"low"`
 	Info     int `json:"info"`
 }
+
+func (rs *RiskSummary) Add(level RiskLevel) {
+	switch level {
+	case RiskCritical:
+		rs.Critical++
+	case RiskHigh:
+		rs.High++
+	case RiskMedium:
+		rs.Medium++
+	case RiskLow:
+		rs.Low++
+	case RiskInfo:
+		rs.Info++
+	}
+}
+
 type ScanReport struct {
 	Target      string       `json:"target"`
 	ScanTime    string       `json:"scan_time"`
