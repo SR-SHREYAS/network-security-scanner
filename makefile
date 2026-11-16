@@ -11,5 +11,5 @@ vet: fmt
 build: vet
 	go build ./...
 
-test: 
-	curl -s "localhost:8080/scan" | jq -S 'del(.scan_time,.duration) | .results |= sort_by(.port)' > after.json
+test: build 
+	go test ./...

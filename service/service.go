@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SR-SHREYAS/network-security-scanner.git/risk"
 	"github.com/SR-SHREYAS/network-security-scanner.git/schema"
 )
 
@@ -90,14 +91,15 @@ func ScanPort(target string, port int, timeout time.Duration) schema.ScanResult 
 		service = identifyService(port, banner)
 	}
 
-	riskLevel := classifyRisk(port, service)
+	level, reason := risk.Classify(service)
 
 	return schema.ScanResult{
 		Port:      port,
 		State:     schema.StateOpen,
 		Service:   service,
 		Banner:    banner,
-		RiskLevel: riskLevel,
+		RiskLevel: level,
+		Reason:    reason,
 	}
 }
 
@@ -133,7 +135,7 @@ func grabBanner(conn net.Conn, port int) string {
 	conn.SetReadDeadline(time.Now().Add(3 * time.Second))
 
 	// request before HTTP service
-	httpPorts := map[int]bool{80: true, 8080: true, 8443: true, 443: true}
+	httpPorts := map[int]bool{80: true, 8080: true}
 	if httpPorts[port] {
 		fmt.Fprintf(conn, "HEAD / HTTP/1.0\r\nHost: target\r\n\r\n")
 	}

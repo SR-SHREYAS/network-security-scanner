@@ -24,6 +24,7 @@ type ScanResult struct {
 	Service   string    `json:"service"`
 	Banner    string    `json:"banner"`
 	RiskLevel RiskLevel `json:"risk_level"`
+	Reason    string    `json:"reason"`
 }
 
 type RiskSummary struct {
