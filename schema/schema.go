@@ -3,8 +3,10 @@ package schema
 type PortState string
 
 const (
-	StateOpen   PortState = "open"
-	StateClosed PortState = "closed"
+	StateOpen     PortState = "open"
+	StateClosed   PortState = "closed"
+	StateFiltered PortState = "filtered"
+	StateError    PortState = "error"
 )
 
 type RiskLevel string
@@ -59,15 +61,19 @@ const (
 )
 
 type ScanReport struct {
-	Target      string       `json:"target"`
-	ResolvedIP  string       `json:"resolved_ip"`
-	Exposure    Exposure     `json:"exposure"`
-	ScanTime    string       `json:"scan_time"`
-	Duration    string       `json:"duration"`
-	TotalPorts  int          `json:"total_ports"`
-	OpenPorts   int          `json:"open_ports"`
-	RiskSummary RiskSummary  `json:"risk_summary"`
-	Results     []ScanResult `json:"results"`
+	Target        string       `json:"target"`
+	ResolvedIP    string       `json:"resolved_ip"`
+	Exposure      Exposure     `json:"exposure"`
+	ScanTime      string       `json:"scan_time"`
+	Duration      string       `json:"duration"`
+	TotalPorts    int          `json:"total_ports"`
+	OpenPorts     int          `json:"open_ports"`
+	ClosedPorts   int          `json:"closed_ports"`
+	FilteredPorts int          `json:"filtered_ports"`
+	ErrorPorts    int          `json:"error_ports"`
+	HostStatus    Host         `json:"host_status"`
+	RiskSummary   RiskSummary  `json:"risk_summary"`
+	Results       []ScanResult `json:"results"`
 }
 
 // Common ports
@@ -99,3 +105,11 @@ var ServiceMap = map[int]string{
 	8080: "HTTP-Alt",
 	8443: "HTTPS-Alt",
 }
+
+type Host string
+
+const (
+	HostUp         Host = "up"
+	HostDown       Host = "down"
+	HostNoResponse Host = "no_response"
+)
