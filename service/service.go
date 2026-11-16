@@ -2,8 +2,10 @@ package service
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -13,8 +15,14 @@ import (
 )
 
 // concurrent orchestration
-func ScanPorts(target string, workers int) schema.ScanReport {
+func ScanPorts(ctx context.Context, input string, workers int) (schema.ScanReport, error) {
 	startTime := time.Now()
+
+	tgt, err := ResolveTarget(ctx, input)
+	if err != nil {
+		return schema.ScanReport{}, err
+	}
+	target := tgt.IP.String() // everything below scans this one resolved IP
 
 	resultChan := make(chan schema.ScanResult, len(schema.CommonPorts))
 	semaphore := make(chan struct{}, workers)
@@ -64,6 +72,8 @@ func ScanPorts(target string, workers int) schema.ScanReport {
 
 	report := schema.ScanReport{
 		Target:      target,
+		ResolvedIP:  target,
+		Exposure:    tgt.Exposure,
 		ScanTime:    startTime.Format(time.RFC3339),
 		Duration:    duration,
 		TotalPorts:  len(schema.CommonPorts),
@@ -72,13 +82,12 @@ func ScanPorts(target string, workers int) schema.ScanReport {
 		Results:     results,
 	}
 
-	return report
-
+	return report, nil
 }
 
 // single port
 func ScanPort(target string, port int, timeout time.Duration) schema.ScanResult {
-	address := fmt.Sprintf("%s: %d", target, port)
+	address := net.JoinHostPort(target, strconv.Itoa(port))
 	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err != nil {
 		return schema.ScanResult{Port: port, State: "closed"}

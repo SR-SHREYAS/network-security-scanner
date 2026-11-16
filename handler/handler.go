@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -20,6 +21,7 @@ func ScanPortHandler(w http.ResponseWriter, r *http.Request) {
 	if target == "" {
 		target = "127.0.0.1"
 	}
+
 	workers := 50
 	if v := r.URL.Query().Get("workers"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
@@ -32,7 +34,15 @@ func ScanPortHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Ports : %d common ports\n", len(schema.CommonPorts))
 	fmt.Printf("Workers: %d\n\n", workers)
 
-	results := service.ScanPorts(target, workers)
+	results, err := service.ScanPorts(r.Context(), target, workers)
+	if err != nil {
+		if errors.Is(err, service.ErrInvalidTarget) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "scan failed", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(results); err != nil {

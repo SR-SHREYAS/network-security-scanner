@@ -50,8 +50,18 @@ func (rs *RiskSummary) Add(level RiskLevel) {
 	}
 }
 
+type Exposure string
+
+const (
+	ExposureLoopback Exposure = "loopback"
+	ExposurePrivate  Exposure = "private"
+	ExposurePublic   Exposure = "public"
+)
+
 type ScanReport struct {
 	Target      string       `json:"target"`
+	ResolvedIP  string       `json:"resolved_ip"`
+	Exposure    Exposure     `json:"exposure"`
 	ScanTime    string       `json:"scan_time"`
 	Duration    string       `json:"duration"`
 	TotalPorts  int          `json:"total_ports"`
